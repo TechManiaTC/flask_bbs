@@ -1,0 +1,68 @@
+{% extends "topic/base.html" %}
+{% block title %}
+邮件详情
+{% endblock %}
+{% block main %}
+<div id="main">
+  <div id="sidebar">
+
+  <div class="panel">
+
+    <div class="header">
+      <span class="col_fade">个人信息</span>
+    </div>
+    <div class="inner">
+      <div class="user_card">
+          <div>
+            <a class="user_avatar" href="#">
+              <img src="{{ user.user_image }}" title="{{ user.username }}">
+            </a>
+            <span class="user_name"><a class="dark" href="{{ url_for('index.user_detail', id=user.id) }}">{{ user.username }}</a></span>
+
+            <div class="board clearfix">
+              <div class="floor">
+                <span class="big">积分: 0 </span>
+              </div>
+            </div>
+            <div class="space clearfix"></div>
+            <span class="signature">
+                {{ user.signature }}
+            </span>
+          </div>
+</div>
+    </div>
+
+  </div>
+
+  <div class="panel">
+    <div class="inner">
+      <a href="{{ url_for('topic.new') }}" id="create_topic_btn">
+        <span class="span-success">发布话题</span>
+      </a>
+    </div>
+  </div>
+
+  </div>
+
+
+    <div id="content">
+  <div class="panel">
+    <div class="header">
+      <ul class="breadcrumb">
+        <li><a href="https://cnodejs.org/">主页</a><span class="divider">/</span></li>
+        <li class="active">新消息</li>
+      </ul>
+    </div>
+    
+    <div class="inner">
+        <p>收件人id： {{ mail.receiver_user }}</p>
+        <p>发件人id： {{ mail.sender_user }}</p>
+        <p>内容: {{ mail.content }}</p>
+    </div>
+    
+  </div>
+
+</div>
+
+</div>
+{% endblock %}
