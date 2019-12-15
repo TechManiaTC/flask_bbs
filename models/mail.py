@@ -1,17 +1,20 @@
-from models import Model
+from app import db
+from models import BaseModelWithTime, QueryWithSoftDelete
 
 
-class Mail(Model):
-    @classmethod
-    def valid_names(cls):
-        names = super().valid_names()
-        names = names + [
-            ('title', str, ''),
-            ('content', str, ''),
-            ('sender_id', str, 0),
-            ('receiver_id', str, 0),
-            ('sender_user', str, ''),
-            ('receiver_user', str, ''),
-            ('topic_id', str, '')
-        ]
-        return names
+class Mail(db.Model, BaseModelWithTime):
+    query_class = QueryWithSoftDelete
+
+    id = db.Column(db.Integer, primary_key=True)
+    topic_id = db.Column(db.Integer, nullable=False, default=0)
+    title = db.Column(db.String(255), nullable=False, default='')
+    content = db.Column(db.Text, nullable=False, default='')
+    sender_id = db.Column(db.Integer, nullable=False, default=0)
+    receiver_id = db.Column(db.Integer, nullable=False, default=0)
+    sender_user = db.Column(db.String(255), nullable=False, default='')
+    receiver_user = db.Column(db.String(255), nullable=False, default='')
+    is_delete = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return '<id %r>' % self.id
+

@@ -1,20 +1,22 @@
-from models import Model
+from app import db
 from models.user import User
+from models import BaseModelWithTime, QueryWithSoftDelete
 
 
-class Topic(Model):
-    @classmethod
-    def valid_names(cls):
-        names = super().valid_names()
-        names = names + [
-            ('views', int, 0),
-            ('title', str, ''),
-            ('content', str, ''),
-            ('user_id', str, 0),
-            ('board_id', str, 0),
-            ('author', str, ''),
-        ]
-        return names
+class Topic(db.Model, BaseModelWithTime):
+    query_class = QueryWithSoftDelete
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False, default='')
+    views = db.Column(db.Integer, nullable=False, default='')
+    content = db.Column(db.Text, nullable=False, default='')
+    user_id = db.Column(db.Integer, nullable=False, default=0)
+    board_id = db.Column(db.Integer, nullable=False, default=0)
+    author = db.Column(db.String(255), nullable=False, default='')
+    is_delete = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return '<id %r>' % self.id
 
     @classmethod
     def find(cls, id):

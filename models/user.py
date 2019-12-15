@@ -1,29 +1,19 @@
-# from models import Model
-from models import Model
+import hashlib
 
-Model = Model
+from app import db
+from models import BaseModelWithTime
 
 
-class User(Model):
-    """
-    User 是一个保存用户数据的 model
-    现在只有两个属性 username 和 password
-    """
-
-    @classmethod
-    def valid_names(cls):
-        names = super().valid_names()
-        names = names + [
-            ('username', str, ''),
-            ('password', str, ''),
-            ('user_image', str, '/uploads/default.png'),
-            ('signature', str, '这家伙很懒，什么个性签名都没有留下。')
-        ]
-        return names
+class User(db.Model, BaseModelWithTime):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), nullable=False, default='')
+    password = db.Column(db.String(255), nullable=False, default='')
+    user_image = db.Column(db.String(255), nullable=False, default='')
+    signature = db.Column(db.String(255), nullable=False, default='')
+    is_delete = db.Column(db.Boolean, nullable=False, default=False)
 
     @staticmethod
     def salted_password(password, salt='$!@><?>HUI&DWQa`'):
-        import hashlib
         def sha256(ascii_str):
             return hashlib.sha256(ascii_str.encode('ascii')).hexdigest()
 
@@ -31,8 +21,8 @@ class User(Model):
         hash2 = sha256(hash1 + salt)
         return hash2
 
-    def hashed_password(self, pwd):
-        import hashlib
+    @staticmethod
+    def hashed_password(pwd):
         # 用 ascii 编码转换成 bytes 对象
         p = pwd.encode('ascii')
         s = hashlib.sha256(p)
@@ -41,8 +31,8 @@ class User(Model):
 
     @classmethod
     def register(cls, form):
-        name = form['username']
-        password = form['password']
+        name = form.get('username', '')
+        password = form.get('password', '')
         if len(name) > 2 and User.one(username=name) is None:
             password = User.salted_password(password)
             u = User.new(dict(
@@ -55,7 +45,7 @@ class User(Model):
 
     @classmethod
     def validate_login(cls, form):
-        u = User.one(username=form['username'])
+        u = User.one(username=form.get('username', ''))
         if u is not None:
             print('first', u.password, 'second', User.salted_password(form['password']))
             if u.password == User.salted_password(form['password']):
@@ -64,9 +54,6 @@ class User(Model):
                 return None
         else:
             return None
-        # user = User.one(
-        #     username=form['username'],
-        #     password=User.salted_password(form['password'])
-        # )
-        # return user
 
+    def __repr__(self):
+        return '<id %r>' % self.id

@@ -1,13 +1,14 @@
-import time
-from models import Model
+from app import db
+from models import BaseModelWithTime, QueryWithSoftDelete
 
 
-class Board(Model):
+class Board(db.Model, BaseModelWithTime):
+    query_class = QueryWithSoftDelete
 
-    @classmethod
-    def valid_names(cls):
-        names = super().valid_names()
-        names = names + [
-            ('title', str, ''),
-        ]
-        return names
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False, default='')
+    is_delete = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return '<id %r>' % self.id
+

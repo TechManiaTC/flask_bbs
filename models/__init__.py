@@ -1,35 +1,38 @@
-import time
+import datetime
 
-from bson import ObjectId
-from pymongo import MongoClient
+from flask_sqlalchemy import BaseQuery
 
-from utils import log
+from app import db
 
 
-class Model(object):
-    db = MongoClient()['web21']
+class BaseModel:
 
     @classmethod
     def valid_names(cls):
         names = [
             # (字段名, 类型, 默认值)
-            ('deleted', bool, False),
-            ('created_time', int, 0),
-            ('updated_time', int, 0),
+            ('is_delete', bool, False),
         ]
         return names
 
-    def __repr__(self):
-        class_name = self.__class__.__name__
-        properties = ('{0} = {1}'.format(k, v) for k, v in self.__dict__.items())
-        return '<{0}: \n  {1}\n>'.format(class_name, '\n  '.join(properties))
+    @classmethod
+    def all(cls, **kwargs):
+        query = cls.query
+        if kwargs:
+            query = query.filter_by(**kwargs)
+        objects = query.all()
+        return objects
 
     @classmethod
-    def new(cls, form, **kwargs):
-        """
-        new 是给外部使用的函数
-        """
-        # 创建一个空对象
+    def one(cls, **kwargs):
+        objects = cls.all(**kwargs)
+        if len(objects) > 0:
+            return objects[0]
+        else:
+            return None
+
+    @classmethod
+    def assemble(cls, form, **kwargs):
         m = cls()
 
         for name in cls.valid_names():
@@ -47,79 +50,72 @@ class Model(object):
             else:
                 raise KeyError
 
-        # 写入默认数据
-        timestamp = int(time.time())
-        m.created_time = timestamp
-        m.updated_time = timestamp
-
-        m.save()
         return m
+
+    @classmethod
+    def new(cls, form, **kwargs):
+        o = cls.assemble(form, **kwargs)
+        o.save()
+        return o
 
     def save(self):
-        name = self.__class__.__name__
-        print('save', self.__dict__)
-        _id = self.db[name].save(self.__dict__)
-        self.id = str(_id)
+        db.session.add(self)
+        db.session.commit()
+        return self
 
-    @classmethod
-    def delete(cls, id):
-        name = cls.__name__
-        query = {
-            '_id': ObjectId(id),
-        }
-        values = {
-            '$set': {
-                'deleted': True
-            }
-        }
-        cls.db[name].update_one(query, values)
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+        return self
 
-    @classmethod
-    def update(cls, id, form):
-        name = cls.__name__
-        query = {
-            '_id': ObjectId(id),
-        }
-        values = {
-            '$set': form,
-        }
-        log('mongo update', query, values)
-        cls.db[name].update_one(query, values)
+    def soft_delete(self):
+        self.is_delete = True
+        self.save()
+        return self
 
-    @classmethod
-    def _new_with_bson(cls, bson):
-        """
-        这是给内部 all 这种函数使用的函数
-        从 mongo 数据中恢复一个 model
-        """
-        m = cls()
-        # print('bson', bson)
-        for key in bson:
-            setattr(m, key, bson[key])
-        m.id = str(bson['_id'])
-        return m
-
-    @classmethod
-    def all(cls, **kwargs):
-        kwargs['deleted'] = False
-        if 'id' in kwargs:
-            kwargs['_id'] = ObjectId(kwargs['id'])
-            kwargs.pop('id')
-        name = cls.__name__
-        docuemtns = cls.db[name].find(kwargs)
-        # print('_find', kwargs, ds)
-        l = [cls._new_with_bson(d) for d in docuemtns]
-        return l
-
-    @classmethod
-    def one(cls, **kwargs):
-        documents = cls.all(**kwargs)
-        if len(documents) > 0:
-            return documents[0]
-        else:
-            return None
+    def update(self, data):
+        o = self.__class__.new(data)
+        o.save()
 
     def json(self):
         d = self.__dict__
-        d.pop('_id')
         return d
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        properties = ('{0} = {1}'.format(k, v) for k, v in self.__dict__.items())
+        return '<{0}: \n  {1}\n>'.format(class_name, '\n  '.join(properties))
+
+
+class BaseModelWithTime(BaseModel):
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+
+class QueryWithSoftDelete(BaseQuery):
+    _with_deleted = False
+
+    def __new__(cls, *args, **kwargs):
+        obj = super(QueryWithSoftDelete, cls).__new__(cls)
+        obj._with_deleted = kwargs.pop('_with_deleted', False)
+        if len(args) > 0:
+            super(QueryWithSoftDelete, obj).__init__(*args, **kwargs)
+            return obj.filter_by(is_delete=False) if not obj._with_deleted else obj
+        return obj
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def with_deleted(self):
+        return self.__class__(db.class_mapper(self._mapper_zero().class_),
+                              session=db.session(), _with_deleted=True)
+
+    def _get(self, *args, **kwargs):
+        # this calls the original query.get function from the base class
+        return super(QueryWithSoftDelete, self).get(*args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        # the query.get method does not like it if there is a filter clause
+        # pre-loaded, so we need to implement it using a workaround
+        obj = self.with_deleted()._get(*args, **kwargs)
+        return obj if obj is None or self._with_deleted or not obj.is_delete else None
