@@ -7,7 +7,7 @@ import app
 
 
 sys.path.insert(0, abspath(dirname(__file__)))
-application = app.configured_app()
+application = app.register_router()
 
 """
 建立一个软连接
