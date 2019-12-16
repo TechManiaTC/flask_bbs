@@ -24,7 +24,6 @@ from utils import log
 
 main = Blueprint('index', __name__)
 
-
 """
 用户在这里可以
     访问首页
@@ -44,7 +43,7 @@ def index():
         ms = Topic.all(board_id=board_id)
     bs = Board.all()
     u = current_user()
-    if u == False:
+    if not u:
         return render_template("index.html", ms=ms, bs=bs, bid=board_id)
     else:
         return redirect(url_for('topic.index'))

@@ -35,13 +35,8 @@ class BaseModel:
     def assemble(cls, form, **kwargs):
         m = cls()
 
-        for name in cls.valid_names():
-            k, t, v = name
-            if k in form:
-                setattr(m, k, t(form[k]))
-            else:
-                # 设置默认值
-                setattr(m, k, v)
+        for k, v in form.items():
+            setattr(m, k, v)
 
         # 处理额外的参数 kwargs
         for k, v in kwargs.items():
