@@ -32,8 +32,8 @@ class BaseModel:
             return None
 
     @classmethod
-    def assemble(cls, form, **kwargs):
-        m = cls()
+    def assemble(cls, form, obj=None, **kwargs):
+        m = obj or cls()
 
         for k, v in form.items():
             setattr(m, k, v)
@@ -69,8 +69,9 @@ class BaseModel:
         return self
 
     def update(self, data):
-        o = self.__class__.new(data)
+        o = self.__class__.assemble(data, self)
         o.save()
+        return o
 
     def json(self):
         d = self.__dict__
