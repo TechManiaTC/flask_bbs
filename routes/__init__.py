@@ -17,9 +17,9 @@ def current_user():
         return None
 
 
-# csrf_tokens = dict()
+csrf_tokens = dict()
 # redis 自动转码
-r = redis.StrictRedis(charset="utf-8", decode_responses=True)
+# r = redis.StrictRedis(charset="utf-8", decode_responses=True)
 
 
 def csrf_required(f):
@@ -28,13 +28,13 @@ def csrf_required(f):
         token = request.args.get('token')
         u = current_user()
         # log('check token', token, u.id, r.exists(token), r.get(token))
-        if r.exists(token) and r.get(token) == u.id:
-            r.delete(token)
-            return f(*args, **kwargs)
-        # if token in csrf_tokens:
-        #     uid = csrf_tokens.pop(token)
-        #     if uid == u.id:
-        #         return f(*args, **kwargs)
+        # if r.exists(token) and r.get(token) == u.id:
+        #     r.delete(token)
+        #     return f(*args, **kwargs)
+        if token in csrf_tokens:
+            uid = csrf_tokens.pop(token)
+            if uid == u.id:
+                return f(*args, **kwargs)
         else:
             abort(401)
 
@@ -44,7 +44,7 @@ def csrf_required(f):
 def new_csrf_token():
     u = current_user()
     token = str(uuid.uuid4())
-    # csrf_tokens[token] = u.id
-    r.set(token, u.id)
+    csrf_tokens[token] = u.id
+    # r.set(token, u.id)
     log('new token', token, u.id)
     return token

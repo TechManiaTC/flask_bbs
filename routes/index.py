@@ -18,6 +18,7 @@ from models.topic import Topic
 from models.user import User
 import os
 import uuid
+import config
 
 from routes import current_user, new_csrf_token
 from utils import log
@@ -158,10 +159,10 @@ def add_img():
         # ../../../../../../../root/.ssh/authorized_keys
         # filename = secure_filename(file.filename)
         filename = '{}.{}'.format(str(uuid.uuid4()), suffix)
-        print('avatar path', os.path.join('user_image', filename))
-        file.save(os.path.join('user_image', filename))
+        print('avatar path', os.path.join(config.basedir + '/user_image', filename))
+        file.save(os.path.join(config.basedir + '/user_image', filename))
         u = current_user()
-        User.update(u.id, dict(
+        u.update(dict(
             user_image='/uploads/{}'.format(filename)
         ))
 
@@ -172,4 +173,4 @@ def add_img():
 # nginx 静态文件
 @main.route("/uploads/<filename>")
 def uploads(filename):
-    return send_from_directory('user_image', filename)
+    return send_from_directory(config.basedir + '/user_image', filename)
