@@ -8,7 +8,7 @@ class Topic(db.Model, BaseModelWithTime):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False, default='')
-    views = db.Column(db.Integer, nullable=False, default='')
+    views = db.Column(db.Integer, nullable=False, default=0)
     content = db.Column(db.Text, nullable=False, default='')
     user_id = db.Column(db.Integer, nullable=False, default=0)
     board_id = db.Column(db.Integer, nullable=False, default=0)

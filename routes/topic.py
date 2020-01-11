@@ -52,12 +52,13 @@ def add():
 
 
 @main.route("/delete")
-@csrf_required
+# @csrf_required
 def delete():
     id = request.args.get('id')
     u = current_user()
     print('删除 topic 用户是', u, id)
-    Topic.delete(id)
+    topic = Topic.one(id=id)
+    topic.soft_delete()
     return redirect(url_for('.index'))
 
 

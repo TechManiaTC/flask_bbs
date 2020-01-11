@@ -13,7 +13,7 @@ def current_user():
         uid = session['user_id']
         u = User.one(id=uid)
         return u
-    else :
+    else:
         return None
 
 
