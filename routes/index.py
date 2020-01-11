@@ -105,7 +105,7 @@ def setting():
 def edit_profile():
     u = current_user()
     form = request.form
-    User.update(id=u.id, form=form)
+    u.update(form)
     return redirect(url_for('.setting'))
 
 
@@ -116,7 +116,7 @@ def edit_password():
     old_pass = User.salted_password(form['old_pass'])
     if old_pass == u.password:
         new_pass = User.salted_password(form['new_pass'])
-        User.update(u.id, dict(
+        u.update(dict(
             password=new_pass
         ))
     return redirect(url_for('.setting'))
