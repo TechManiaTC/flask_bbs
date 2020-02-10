@@ -3,25 +3,25 @@
 import sys
 from os.path import abspath
 from os.path import dirname
+
 import app
 
-
 sys.path.insert(0, abspath(dirname(__file__)))
-application = app.register_router()
+application = app.create_app('development')
 
 """
 建立一个软连接
-ln -s /var/www/bbs/web21.conf /etc/supervisor/conf.d/web21.conf
+ln -s /var/www/flask_bbs/bbs.conf /etc/supervisor/conf.d/bbs.conf
 
-ln -s /var/www/bbs/web21.nginx /etc/nginx/sites-enabled/bbs
+ln -s /var/www/flask_bbs/bbs.nginx /etc/nginx/sites-enabled/bbs
 
 
 
-➜  ~ cat /etc/supervisor/conf.d/web21.conf
+➜  ~ cat /etc/supervisor/conf.d/bbs.conf
 
-[program:bbs]
-command=/usr/local/bin/gunicorn wsgi -c gunicorn.config.py
-directory=/var/www/bbs
+[program:flask_bbs]
+command=/usr/local/bin/gunicorn wsgi --bind localhost:5000 --workers 3 --worker-class gevent
+directory=/var/www/flask_bbs
 autostart=true
 autorestart=true
 
