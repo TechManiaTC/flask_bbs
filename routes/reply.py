@@ -10,7 +10,7 @@ from models.mail import Mail
 from routes import *
 
 from models.reply import Reply
-from utils import log
+from utils.common import log
 
 main = Blueprint('reply', __name__)
 

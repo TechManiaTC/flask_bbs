@@ -20,8 +20,10 @@ import os
 import uuid
 import config
 
-from routes import current_user, new_csrf_token
-from utils import log
+from routes import current_user, new_csrf_token, token_current_user
+from utils.common import log
+from utils import token as token_service
+from decorator.auth import token_login_required
 
 main = Blueprint('index', __name__)
 
@@ -36,17 +38,21 @@ main = Blueprint('index', __name__)
 
 
 @main.route("/")
+@token_login_required
 def index():
+    u = token_current_user(token_service.get('user_id', None))
     board_id = request.args.get('board_id', 'all')
     if board_id == 'all':
         ms = Topic.all()
     else:
         ms = Topic.all(board_id=board_id)
     bs = Board.all()
-    u = current_user()
+    # u = current_user()
     if not u:
+        print('登陆失败')
         return render_template("index.html", ms=ms, bs=bs, bid=board_id)
     else:
+        print('登陆成功')
         return redirect(url_for('topic.index'))
 
 
@@ -70,6 +76,27 @@ def login_confirm():
         # 设置 cookie 有效期为 永久
         session.permanent = False
         return redirect(url_for('topic.index'))
+
+
+@main.route('/login/jwt_confirm', methods=['POST'])
+def jwt_confirm():
+    form = request.form
+    u = User.validate_login(form)
+    print('login u', u)
+    if u is None:
+        return redirect(url_for('index.login'))
+    else:
+        # session 中写入 user_id
+        token = {
+            'user_id': u.id
+        }
+        res = make_response(redirect(url_for('topic.index')))
+        res.set_cookie('token', token_service.encryption_set(token))
+        session['user_id'] = u.id
+        print('login', session)
+        # 设置 cookie 有效期为 永久
+        session.permanent = False
+        return res
 
 
 @main.route('/signout')

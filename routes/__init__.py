@@ -5,7 +5,7 @@ from flask import session, request, abort
 import redis
 
 from models.user import User
-from utils import log
+from utils.common import log
 
 
 def current_user():
@@ -15,6 +15,12 @@ def current_user():
         return u
     else:
         return None
+
+
+def token_current_user(user_id):
+    if user_id is None:
+        return None
+    return User.one(id=user_id)
 
 
 csrf_tokens = dict()
