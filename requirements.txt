@@ -37,7 +37,7 @@ keyring==10.6.0
 keyrings.alt==3.0
 kombu==4.6.5
 language-selector==0.1
-lxml==4.4.1
+lxml==4.6.5
 MarkupSafe==1.1.1
 more-itertools==7.2.0
 netifaces==0.10.4
